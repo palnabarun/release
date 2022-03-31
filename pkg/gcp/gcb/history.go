@@ -150,8 +150,8 @@ func (h *History) Run() error {
 			mock = "mock "
 		}
 
-		start := job.Timing["BUILD"].StartTime
-		end := job.Timing["BUILD"].EndTime
+		start := job.StartTime
+		end := job.FinishTime
 		logs := job.LogUrl
 
 		// Calculate the duration of the job
@@ -160,17 +160,21 @@ func (h *History) Run() error {
 		if err != nil {
 			return errors.Wrap(err, "parsing the start job time")
 		}
-		tEnd, err := h.impl.ParseTime(layout, end)
-		if err != nil {
-			return errors.Wrap(err, "parsing the end job time")
+
+		out := ""
+		if end != "" {
+			tEnd, err := h.impl.ParseTime(layout, end)
+			if err != nil {
+				return errors.Wrap(err, "parsing the end job time")
+			}
+			diff := tEnd.Sub(tStart)
+			out = time.Time{}.Add(diff).Format("15:04:05")
 		}
-		diff := tEnd.Sub(tStart)
-		out := time.Time{}.Add(diff)
 
 		step := fmt.Sprintf("`%s%s`", mock, subcommand)
 		table.Append([]string{
 			step, command, logs, start,
-			out.Format("15:04:05"), status[job.Status],
+			out, status[job.Status],
 		})
 	}
 
